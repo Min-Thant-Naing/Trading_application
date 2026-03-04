@@ -1067,7 +1067,7 @@ function openPnLModal(dateKey, totalPnl) {
     
     if (totalPnl !== undefined && totalPnl !== null && totalPnl !== 0) {
         currentPnLSign = totalPnl >= 0 ? 1 : -1;
-        pnlInput.value = Math.abs(totalPnl);
+        pnlInput.value = parseFloat(Math.abs(totalPnl).toFixed(2));
     } else if (totalPnl === 0) {
         currentPnLSign = 1;
         pnlInput.value = '0';
