@@ -96,9 +96,6 @@ async function init() {
     updateModeUI(); 
     updateModeNewsUI();
     updateSettingsModeButtonsUITime(); 
-    if (inputPoints) {
-        inputPoints.focus();
-    }
 }
 
 
@@ -674,10 +671,40 @@ function adjustTextareaHeight() {
 
 
 
-loadNoteLocal();
-adjustTextareaHeight();
-loadEvents();
-init();
+function hideLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.classList.add('opacity-0');
+        setTimeout(() => {
+            overlay.classList.add('hidden');
+        }, 500);
+    }
+}
+
+// Global Launch
+async function launchApp() {
+    try {
+        // Run all initial loads in parallel
+        await Promise.all([
+            loadNoteLocal(),
+            loadEvents(),
+            init(),
+            initCalendar()
+        ]);
+    } catch (err) {
+        console.error("Error during app launch:", err);
+    } finally {
+        // Always hide loading, even if some parts fail
+        hideLoading();
+        if (inputPoints) {
+            inputPoints.focus();
+        }
+    }
+}
+
+// Launch
+// launchApp is called at the end of the script
+// adjustTextareaHeight is called at the end of the script
 
 
 
@@ -720,7 +747,7 @@ async function initCalendar() {
     
     // Initial Load
     await loadManualPnL();
-    loadTrades();
+    await loadTrades();
 }
 
 async function loadManualPnL() {
@@ -755,8 +782,10 @@ async function loadTrades() {
         tradeData = await response.json();
         
         processAndRender();
+        return true;
     } catch (err) {
         console.error("Failed to load trades:", err);
+        return false;
     }
 }
 
@@ -910,7 +939,7 @@ monthSelect.onchange = processAndRender;
 yearSelect.onchange = processAndRender;
 
 // Launch
-initCalendar();
+// initCalendar(); is now called within launchApp() at the top level
 
 
 
@@ -954,8 +983,8 @@ function updateHeaderUI(activeSection) {
 
 
 
-// Ensure you call this at the end of your script or inside init()
-updateHeaderUI('calculator');
+// Initial load
+// updateHeaderUI('calculator') is called at the end of the script
 
 tabButtons.forEach(btn => {
     btn.addEventListener('click', () => {
@@ -981,7 +1010,7 @@ tabButtons.forEach(btn => {
 });
 
 // Initial load
-updateHeaderUI('calculator');
+// updateHeaderUI('calculator') is called at the end of the script
 
 
 
@@ -1122,4 +1151,9 @@ pnlSaveBtn.addEventListener('click', () => {
 pnlModal.addEventListener('click', (e) => {
     if (e.target === pnlModal) closePnLModal();
 });
+
+// Launch
+launchApp();
+updateHeaderUI('calculator');
+adjustTextareaHeight();
 
