@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>size calculator</title>
+    
+    <!-- Tailwind CSS for Design -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/style.css">
+
+    <link rel="icon" href="logo.jpg" >
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-slate-100 text-slate-900 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-300">
+    <div id="root" class="flex flex-col items-center justify-start p-4 md:p-8 space-y-8">
+       <header class="w-full flex items-center justify-between py-4 max-w-lg mx-auto mb-4 md:mb-6">
+            <div id="section-tabs" class="flex items-center gap-1 bg-slate-50 dark:bg-slate-950 p-1 rounded-2xl border-2 border-slate-200 dark:border-white/5  overflow-hidden">
+                
+                <button data-section="calculator" class="tab-btn flex items-center justify-center py-2 px-2.5 rounded-xl transition-all duration-300 shrink-0">
+                    <span class="text-xl shrink-0">🧮</span>
+                    <span id="label-calculator" class="max-w-0 opacity-0 overflow-hidden whitespace-nowrap transition-all duration-500 ease-in-out font-black uppercase text-[10px] tracking-widest">Lot Size</span>
+                </button>
+
+                <button data-section="news" class="tab-btn flex items-center justify-center py-2 px-2.5 rounded-xl transition-all duration-300 shrink-0">
+                    <span class="text-xl shrink-0">📰</span>
+                    <span id="label-news" class="max-w-0 opacity-0 overflow-hidden whitespace-nowrap transition-all duration-500 ease-in-out font-black uppercase text-[10px] tracking-widest">News</span>
+                </button>
+
+                <button data-section="notes" class="tab-btn flex items-center justify-center py-2 px-2.5 rounded-xl transition-all duration-300 shrink-0">
+                    <span class="text-xl shrink-0">📝</span>
+                    <span id="label-notes" class="max-w-0 opacity-0 overflow-hidden whitespace-nowrap transition-all duration-500 ease-in-out font-black uppercase text-[10px] tracking-widest">Notes</span>
+                </button>
+
+                <button data-section="calendar" class="tab-btn flex items-center justify-center py-2 px-2.5 rounded-xl transition-all duration-300 shrink-0">
+                    <span class="text-xl shrink-0">📅</span>
+                    <span id="label-calendar" class="max-w-0 opacity-0 overflow-hidden whitespace-nowrap transition-all duration-500 ease-in-out font-black uppercase text-[10px] tracking-widest">Cal</span>
+                </button>
+            </div>
+
+            <button id="open-settings-btn" class="p-3.5  bg-slate-50 dark:bg-slate-950 rounded-2xl border-2 border-slate-200 dark:border-white/5 transition-all active:scale-95 shadow-sm shrink-0">
+                <svg class="w-6 h-6 text-slate-500 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+                </svg>
+            </button>
+        </header>
+        <main class="w-full max-w-lg mx-auto grid grid-cols-1 gap-6 pt-2 md:pt-4">
+            <div id="section-calculator">
+              <section class="bg-white dark:bg-slate-900/50 rounded-3xl p-6 shadow-xl border border-slate-200 dark:border-white/5 backdrop-blur-sm">
+                  <div class="space-y-7">
+                      <div class="flex bg-slate-100 dark:bg-slate-950 p-1.5 rounded-2xl border border-slate-200 dark:border-white/5">
+                          <button id="btn-sp1" class="flex-1 py-4 px-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-200 bg-white dark:bg-slate-800 shadow-lg text-indigo-600 dark:text-indigo-400">
+                              SPX500
+                          </button>
+                          <button id="btn-nq1" class="flex-1 py-4 px-4 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                              NAS100
+                          </button>
+                      </div>
+                      <div class="space-y-3">
+                            <div class="flex items-center justify-between mb-3 px-1">
+                                <label for="points" 
+                                    class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 dark:text-slate-400">
+                                    Input Stop Loss
+                                </label>
+
+                                <span id="risk-amount-display"
+                                    class="px-3 py-2 rounded-xl text-xs font-black tabular-nums transition-all duration-200">
+                                    0
+                                </span>
+                            </div>
+
+                            <div class="relative group">
+                                <input id="points" type="number" inputmode="decimal" placeholder="0.00" class="w-full bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-transparent rounded-2xl py-5 px-6 text-3xl font-black text-slate-900 dark:text-white focus:border-indigo-500 focus:bg-white dark:focus:bg-slate-900 transition-all outline-none tabular-nums">
+                                
+                            </div>
+                      </div>
+                      <button id="calculate-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-black uppercase tracking-widest py-5 rounded-2xl shadow-xl shadow-indigo-600/30 transition-all active:scale-95 disabled:opacity-30">
+                          Calculate Lot
+                      </button>
+                  </div>
+              </section>     
+              <!-- Result Area -->
+              <section id="result-container" class="hidden">
+                  <div class="mt-10 bg-white dark:bg-slate-900/50 border border-indigo-600/20 dark:border-indigo-500/30 rounded-3xl p-10 shadow-2xl flex flex-col items-center relative overflow-hidden group">
+                      <div class="absolute inset-0 bg-indigo-600/5 blur-3xl rounded-full scale-110 pointer-events-none group-hover:bg-indigo-600/10 transition-colors"></div>
+                      <span class="text-[10px] font-black uppercase tracking-[0.4em] text-indigo-500 relative mb-2">Calculated Lot Size</span>
+                      <div id="result-value" class="text-8xl font-black text-indigo-600 dark:text-indigo-400 tabular-nums relative mb-6">0.0</div>
+                      <button id="copy-btn" class="relative flex items-center space-x-2 px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/40 hover:text-indigo-600">
+                          <span id="copy-text">Copy to Clipboard</span>
+                      </button>
+                  </div>
+              </section>         
+            </div>
+
+            <div id="section-news" class="hidden"> 
+              <section class="bg-white dark:bg-slate-900/50 rounded-3xl w-full p-5 shadow-xl border border-slate-200 dark:border-white/5 backdrop-blur-sm">
+                  <div class="space-y-7">
+                      <!-- Tabs -->
+                      <div class="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200 dark:border-white/5">
+                          <button id="btn-ys"
+                              class="flex-1 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-wide transition-all text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                              Yesterday
+                          </button>   
+                          <button id="btn-td"
+                              class="flex-1 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-wide bg-white dark:bg-slate-800 text-indigo-600 dark:text-indigo-400 shadow-inner">
+                              Today
+                          </button>   
+                          <button id="btn-tm"
+                              class="flex-1 py-2 rounded-xl text-[10px] font-semibold uppercase tracking-wide transition-all text-slate-400 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                              Tomorrow
+                          </button>
+                      </div>    
+                      <!-- Time selector -->
+                      <div id="time-selector" class="flex items-center justify-between rounded-2xl px-3 py-2 text-xs text-slate-400">
+                          <!-- Left arrow -->
+                          <button id="time-prev" class="w-8 h-8 flex items-center justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-400 opacity-60 hover:opacity-100 transition-all -mt-1">
+                          ‹
+                          </button> 
+                          <!-- Time list -->
+                          <div id="time-list" class="flex overflow-hidden bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl border border-slate-200 dark:border-white/5"></div> 
+                          <!-- Right arrow -->
+                          <button id="time-next" class="w-8 h-8 flex items-center justify-center text-2xl font-bold text-indigo-600 dark:text-indigo-400 opacity-60 hover:opacity-100 transition-all -mt-1">
+                          ›
+                          </button>
+                      </div>    
+                      <!-- Events -->
+                      <div id="events-container" class="bg-slate-50 dark:bg-slate-950 border-2 border-slate-200 dark:border-transparent rounded-2xl px-4 py-3 divide-y divide-slate-200 dark:divide-white/5">
+                      </div>
+                  </div>
+              </section>  
+            </div>
+
+            <div id="section-notes" class="hidden w-full">
+                <section
+                    class="bg-slate-100 dark:bg-slate-950 rounded-3xl w-full p-5 border-4 border-slate-200 dark:border-white/5 overflow-visible">
+                    
+                    <textarea
+                        id="todo-input"
+                        placeholder="Write your notes here..."
+                        class="w-full p-4 resize-none outline-none bg-transparent font-semibold text-black dark:text-white block"
+                    ></textarea>
+                </section>
+            </div>
+
+
+
+
+            <div id="section-calendar" class="hidden">
+              <section class="bg-white dark:bg-slate-900/50 rounded-3xl w-full p-5 shadow-xl border border-slate-200 dark:border-white/5 backdrop-blur-sm transition-all duration-300">
+                <div class="space-y-7">
+                  <div class="flex items-center justify-between gap-2 flex-nowrap">
+                    <div class="flex items-center text-xs sm:text-sm font-black text-slate-400 whitespace-nowrap">
+                      Total P&L
+                      <span id="totalPnL"
+                        class="ml-2 px-3 py-2 rounded-xl text-xs font-black tabular-nums transition-all duration-200">
+                        0
+                      </span>
+                    </div>
+                    <div class="flex gap-4">
+                      <div class="relative">
+                        <select id="yearSelect"
+                          class="appearance-none bg-transparent pr-5 text-slate-400 text-sm font-black cursor-pointer outline-none  hover:text-slate-600 dark:hover:text-slate-200 tracking-wide transition-all">
+                        </select>
+                        <div class="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <svg class="w-3 h-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 tracking-wide transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                      </div>
+
+                      <div class="relative">
+                        <select id="monthSelect"
+                          class="appearance-none bg-transparent pr-5 text-slate-400 text-sm font-black cursor-pointer outline-none  hover:text-slate-600 dark:hover:text-slate-200 tracking-wide transition-all">
+                        </select>
+                        <div class="absolute right-0 top-1/2 -translate-y-1/2 pointer-events-none">
+                          <svg class="w-3 h-3 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 tracking-wide transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="4" d="M19 9l-7 7-7-7"></path>
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <div id="calendar"
+                    class="grid grid-cols-7 gap-1 sm:gap-3">
+                  </div>
+                </div>
+              </section>               
+            </div>
+        </main>
+        <div class="h-12"></div>
+    </div>  
+
+    <!-- Settings Modal Structure -->
+    <div id="settings-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden transition-opacity duration-300 ">
+        <!-- This is the actual sliding panel container -->
+        <div id="settings-panel" class="fixed right-0 top-0 border-l border-slate-800  h-full w-full max-w-sm bg-slate-50 dark:bg-slate-950 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out p-6 overflow-y-auto">
+            <!-- Header with close icon using inline SVG -->
+            <div class="flex justify-between items-center mb-14 mt-6 ">
+                <h2 class="text-xl text-slate-900 font-black uppercase select-none tracking-tight dark:text-white">SETTINGS</h2>
+                <button id="close-settings-btn" class="p-3.5 bg-slate-100 dark:bg-slate-950 rounded-2xl border-2 border-slate-200 dark:border-white/5 transition-all active:scale-95 shadow-sm shrink-0">
+                    <!-- SVG Icon for 'X' (Times/Close) -->
+                    <svg xmlns="http://www.w3.org" class="w-6 h-6 text-slate-500 dark:text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                </button>
+
+            </div>
+
+            <div class="space-y-10">
+                <!-- Risk Amount Setting (Exact Match to Image) -->
+                <div>
+                    <label for="risk-amount-input" class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 block mb-6">
+                        RISK AMOUNT
+                    </label>
+                    <div class="flex items-center rounded-2xl p-4 bg-slate-100  dark:bg-slate-900/50 border-2  border-slate-200 dark:border-white/5 focus-within:border-indigo-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
+                        <span class="text-slate-500 mr-2 text-xl font-black">$</span>
+                        <input 
+                            id="risk-amount-input" 
+                            type="number" 
+                            inputmode="decimal" 
+                            value="500" 
+                            class="w-full text-xl font-black text-slate-900 dark:text-white outline-none appearance-none tabular-nums bg-transparent"
+                        >
+                    </div>
+                </div>
+
+                <div>
+                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1 block mb-6">
+                        FIXED VALUE
+                    </label>
+                    <div class="flex items-center space-x-3">
+                        <!-- ES/NQ Mode Switcher -->
+                        <div class="flex bg-slate-100 dark:bg-slate-950 rounded-2xl p-1  border-2 border-slate-200 dark:border-white/5">
+                            <!-- Active button -->
+                            <button id="btn-es-settings" class="flex-1 py-4 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 bg-white dark:bg-slate-800 shadow-lg text-indigo-600 dark:text-indigo-400 scale-[1.02]">
+                                ES
+                            </button>
+                            <!-- Inactive button -->
+                            <button id="btn-nq-settings" class="flex-1 py-4 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                NQ
+                            </button>
+                        </div>
+
+                        <!-- Input Card -->
+                        <div class="flex items-center rounded-2xl p-4 bg-slate-100 dark:bg-slate-900/50  border-2  border-slate-200 dark:border-white/5  focus-within:border-indigo-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all">
+                            
+                            <input 
+                                id="es-nq-fixed-value-input" 
+                                type="number" 
+                                inputmode="decimal" 
+                                value="100.172" 
+                                class="w-full text-xl font-black text-slate-900 dark:text-white outline-none bg-transparent tabular-nums appearance-none"
+                            >
+                        </div>
+                    </div>    
+                </div>
+                <div>
+                    <label class="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1 block mb-6">Time Zone</label>
+                    <div class="flex items-center space-x-3">
+                        <div class="flex bg-slate-100 dark:bg-slate-950 p-1 rounded-2xl border-2 border-slate-200 dark:border-white/5 w-full">
+                            <button id="btn-ny-settings" class="flex-1 py-4 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 bg-white dark:bg-slate-800 shadow-lg text-indigo-600 dark:text-indigo-400 scale-[1.02]">
+                                NewYork
+                            </button>
+                            <button id="btn-my-settings" class="flex-1 py-4 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                                Malaysia
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Horizontal Divider Line (matches image design) -->
+            <hr class="border-slate-800 my-16 "> 
+
+            <!-- Reset Defaults Button Section (Exact Match to Image) -->
+            <div class="flex justify-center mb-20">
+                <button id="reset-defaults-btn" class="text-xs font-black uppercase tracking-widest text-red-500 flex items-center space-x-2 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 13a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M20 11a8.1 8.1 0 0 0 -15.5 -2m-.5 -4v4h4" />
+                    </svg>
+                    <span>Reset All Defaults</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast"
+        class="fixed bottom-6 left-1/2 -translate-x-1/2 
+                 bg-indigo-600 text-white dark:bg-slate-900/50 dark:text-slate-100 text-sm 
+                px-4 py-2 rounded-xl shadow-lg
+                opacity-0 translate-y-10 
+                 border border-slate-200 dark:border-white/5
+                transition-all duration-300 pointer-events-none z-50">
+        Settings reset to default
+    </div>
+
+    <!-- PnL Modal -->
+    <div id="pnl-modal" class="fixed inset-0 bg-black bg-opacity-70 hidden transition-opacity duration-300 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-50 dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm shadow-2xl transform scale-95 opacity-0 transition-all duration-300" id="pnl-panel">
+            <h3 class="text-lg font-black text-slate-900 dark:text-white mb-6 uppercase tracking-tight" id="pnl-modal-date">PNL FOR ...</h3>
+            
+            <div class="flex bg-slate-100 dark:bg-slate-950 rounded-2xl p-1 border-2 border-slate-200 dark:border-white/5 mb-4">
+                <button id="btn-pnl-profit" class="flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 bg-white dark:bg-slate-800 shadow-lg text-emerald-500 scale-[1.02]">
+                    PROFIT (+)
+                </button>
+                <button id="btn-pnl-loss" class="flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    LOSS (-)
+                </button>
+            </div>
+
+            <div class="flex items-center rounded-2xl p-4 bg-slate-100 dark:bg-slate-950 border-2 border-slate-200 dark:border-white/5 focus-within:border-indigo-500 focus-within:bg-white dark:focus-within:bg-slate-900 transition-all mb-6">
+                <span class="text-slate-500 mr-2 text-xl font-black">$</span>
+                <input 
+                    id="pnl-input" 
+                    type="number" 
+                    inputmode="decimal" 
+                    placeholder="150" 
+                    class="w-full text-xl font-black text-slate-900 dark:text-white outline-none appearance-none tabular-nums bg-transparent"
+                >
+            </div>
+
+            <div class="flex gap-3">
+                <button id="pnl-cancel-btn" class="flex-1 py-4 rounded-xl font-bold text-slate-500 bg-slate-200 dark:bg-slate-800 dark:text-slate-400 hover:bg-slate-300 dark:hover:bg-slate-700 transition-colors">Cancel</button>
+                <button id="pnl-save-btn" class="flex-1 py-4 rounded-xl font-bold text-white bg-indigo-600 hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-600/30">Save</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/script.js"></script>
+</body>
+</html>

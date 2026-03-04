@@ -1,0 +1,42 @@
+body {
+    font-family: 'Inter', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: contain;
+}
+
+/* Aggressively hide spin-buttons for Chrome, Safari, Edge, Opera */
+input::-webkit-outer-spin-button,
+input::-webkit-inner-spin-button {
+    -webkit-appearance: none !important;
+    margin: 0 !important;
+}
+
+/* Hide spin-buttons for Firefox */
+input[type=number] {
+    -moz-appearance: textfield !important;
+}
+
+.hidden {
+    display: none;
+}
+
+#result-container:not(.hidden) {
+    animation: fadeIn 0.3s ease-out;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+#calendar {
+  transition: opacity 150ms ease-in-out;
+}
+.opacity-0 { opacity: 0; }
