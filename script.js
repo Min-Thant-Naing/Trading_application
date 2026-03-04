@@ -794,9 +794,9 @@ function processAndRender() {
             }
         });
 
-        // Merge manual PnL
+        // Merge manual PnL (Override trade PnL)
         for (const [dateKey, pnl] of Object.entries(manualPnL)) {
-            dailyPnL[dateKey] = (dailyPnL[dateKey] || 0) + pnl;
+            dailyPnL[dateKey] = pnl;
         }
 
         renderCalendarUI(dailyPnL);
@@ -832,17 +832,18 @@ function renderCalendarUI(dailyPnL) {
     // Day Cells
     for (let day = 1; day <= daysInMonth; day++) {
         const dateKey = `${year}-${(month + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
-        const pnl = dailyPnL[dateKey] || 0;
-        monthlyTotal += pnl;
+        const pnl = dailyPnL[dateKey];
+        const displayPnl = pnl || 0;
+        monthlyTotal += displayPnl;
 
         const isToday = new Date().toDateString() === new Date(year, month, day).toDateString();
         
         // Dynamic Tailwind Classes based on PnL
-let cardClass = "relative w-full min-h-[58px] sm:min-h-[70px] py-2 aspect-square rounded-xl  border transition-all duration-200 flex flex-col items-center justify-between overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-95";
+        let cardClass = "relative w-full min-h-[58px] sm:min-h-[70px] py-2 aspect-square rounded-xl  border transition-all duration-200 flex flex-col items-center justify-between overflow-hidden cursor-pointer hover:scale-[1.02] active:scale-95";
 
-        if (pnl > 0) {
+        if (displayPnl > 0) {
             cardClass += " bg-emerald-500/10 border-emerald-500/30 dark:border-emerald-500/20";
-        } else if (pnl < 0) {
+        } else if (displayPnl < 0) {
             cardClass += " bg-rose-500/10 border-rose-500/30 dark:border-rose-500/20";
         } else {
             cardClass += " bg-slate-50 dark:bg-slate-800/50 border-transparent";
@@ -850,26 +851,25 @@ let cardClass = "relative w-full min-h-[58px] sm:min-h-[70px] py-2 aspect-square
 
         const div = document.createElement("div");
         div.className = cardClass;
-        div.onclick = () => openPnLModal(dateKey, manualPnL[dateKey] || 0);
+        div.onclick = () => openPnLModal(dateKey, pnl);
         
-div.innerHTML = `
-    <div class="flex items-center justify-center w-full h-7">
-        <div class="text-[10px] sm:text-[11px] ${
-            isToday 
-            ? 'bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center' 
-            : 'text-slate-400 dark:text-slate-500'
-        }">
-            ${day}
-        </div>
-    </div>
+        div.innerHTML = `
+            <div class="flex items-center justify-center w-full h-7">
+                <div class="text-[10px] sm:text-[11px] ${
+                    isToday 
+                    ? 'bg-indigo-600 text-white w-5 h-5 rounded-full flex items-center justify-center' 
+                    : 'text-slate-400 dark:text-slate-500'
+                }">
+                    ${day}
+                </div>
+            </div>
 
-    <div class="flex items-end justify-center w-full h-5">
-        <div class="text-[10px] sm:text-[11px] font-bold tracking-tight ${pnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}">
-            ${pnl !== 0 ? '$' + Math.abs(pnl).toFixed(0) : ''}
-        </div>
-    </div>
-`;
-
+            <div class="flex items-end justify-center w-full h-5">
+                <div class="text-[10px] sm:text-[11px] font-bold tracking-tight ${displayPnl >= 0 ? 'text-emerald-500' : 'text-rose-500'}">
+                    ${displayPnl !== 0 ? '$' + Math.abs(displayPnl).toFixed(0) : ''}
+                </div>
+            </div>
+        `;
         
         calendarGrid.appendChild(div);
     }
@@ -1033,6 +1033,7 @@ const btnPnlLoss = document.getElementById('btn-pnl-loss');
 
 let currentPnLDateKey = null;
 let currentPnLSign = 1; // 1 for profit, -1 for loss
+let currentTotalPnL = undefined;
 
 function updatePnLToggleUI() {
     if (currentPnLSign === 1) {
@@ -1054,8 +1055,9 @@ btnPnlLoss.addEventListener('click', () => {
     updatePnLToggleUI();
 });
 
-function openPnLModal(dateKey, currentManualPnL) {
+function openPnLModal(dateKey, totalPnl) {
     currentPnLDateKey = dateKey;
+    currentTotalPnL = totalPnl;
     
     // Format date like "Mar 4, 2026"
     const [year, month, day] = dateKey.split('-');
@@ -1063,9 +1065,12 @@ function openPnLModal(dateKey, currentManualPnL) {
     const formattedDate = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
     pnlModalDate.textContent = `PNL FOR ${formattedDate.toUpperCase()}`;
     
-    if (currentManualPnL) {
-        currentPnLSign = currentManualPnL >= 0 ? 1 : -1;
-        pnlInput.value = Math.abs(currentManualPnL);
+    if (totalPnl !== undefined && totalPnl !== null && totalPnl !== 0) {
+        currentPnLSign = totalPnl >= 0 ? 1 : -1;
+        pnlInput.value = Math.abs(totalPnl);
+    } else if (totalPnl === 0) {
+        currentPnLSign = 1;
+        pnlInput.value = '0';
     } else {
         currentPnLSign = 1;
         pnlInput.value = '';
@@ -1093,8 +1098,19 @@ function closePnLModal() {
 pnlCancelBtn.addEventListener('click', closePnLModal);
 pnlSaveBtn.addEventListener('click', () => {
     const val = parseFloat(pnlInput.value);
+    let finalValue = undefined;
+    
     if (!isNaN(val)) {
-        manualPnL[currentPnLDateKey] = Math.abs(val) * currentPnLSign;
+        finalValue = Math.abs(val) * currentPnLSign;
+    }
+    
+    if (finalValue === currentTotalPnL) {
+        closePnLModal();
+        return;
+    }
+    
+    if (finalValue !== undefined) {
+        manualPnL[currentPnLDateKey] = finalValue;
     } else {
         delete manualPnL[currentPnLDateKey]; // clear if empty
     }

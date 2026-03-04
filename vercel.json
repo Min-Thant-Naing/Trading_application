@@ -1,0 +1,9 @@
+{
+  "routes": [
+    { "handle": "filesystem" },
+    { "src": "/api/(.*)", "dest": "/api/index.ts" },
+    { "src": "/calendar", "dest": "/api/index.ts" },
+    { "src": "/trades", "dest": "/api/index.ts" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
