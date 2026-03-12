@@ -684,11 +684,13 @@ function hideLoading() {
 // Global Launch
 async function launchApp() {
     try {
-        // Run all initial loads in parallel
+        // First, load settings to ensure correct timezone
+        await init();
+        
+        // Then load other data in parallel
         await Promise.all([
             loadNoteLocal(),
             loadEvents(),
-            init(),
             initCalendar()
         ]);
     } catch (err) {
