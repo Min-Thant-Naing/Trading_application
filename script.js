@@ -238,11 +238,11 @@ function updateSettingsModeButtonsUITime() {
     if (currentSettingsModeTime === 'NY') {
         btnNySettings.className = `flex-1 py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${activeClass}`;
         btnMySettings.className = `flex-1 py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
-        if(tzDisplay) tzDisplay.textContent = "NY (UTC-13)";
+        if(tzDisplay) tzDisplay.textContent = "NY (UTC-4)";
     } else {
         btnMySettings.className = `flex-1 py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${activeClass}`;
         btnNySettings.className = `flex-1 py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
-        if(tzDisplay) tzDisplay.textContent = "MY (UTC-12)";
+        if(tzDisplay) tzDisplay.textContent = "MY (UTC+8)";
     }
 }
 
@@ -357,8 +357,8 @@ function convertTimeBetweenZones(timeStr, fromZone, toZone) {
     // timeStr = "HH:MM"
     let [hour, minute] = timeStr.split(":").map(Number);
 
-    // NY offset = -13 for your current code, MY offset = -12
-    const offsets = { NY: -13, MY: -12 };
+    // NY offset = -4 for your current code, MY offset = 8
+    const offsets = { NY: -4, MY: 8 };
 
     let diff = offsets[toZone] - offsets[fromZone]; // e.g., NY->MY = -12 - (-13) = 1
     hour += diff;
@@ -429,13 +429,13 @@ function convertToLocalTime24(dateStr, timeStr) {
 
     let offsetHours = 0;
 
-    if (currentSettingsModeTime === 'NY') offsetHours = -13; 
-    if (currentSettingsModeTime === 'MY') offsetHours = -12; 
+    if (currentSettingsModeTime === 'NY') offsetHours = -4; 
+    if (currentSettingsModeTime === 'MY') offsetHours = 8; 
 
     const adjustedTime = new Date(utcDate.getTime() + offsetHours * 60 * 60000);
 
-    const adjHour = String(adjustedTime.getHours()).padStart(2, "0");
-    const adjMinute = String(adjustedTime.getMinutes()).padStart(2, "0");
+    const adjHour = String(adjustedTime.getUTCHours()).padStart(2, "0");
+    const adjMinute = String(adjustedTime.getUTCMinutes()).padStart(2, "0");
     const adjMonth = String(adjustedTime.getMonth() + 1).padStart(2, "0");
     const adjDay = String(adjustedTime.getDate()).padStart(2, "0");
     const adjYear = adjustedTime.getFullYear();
