@@ -52,7 +52,7 @@ const esNqFixedValueInput = document.getElementById('es-nq-fixed-value-input');
 const btnEsSettings = document.getElementById('btn-es-settings');
 const btnNqSettings = document.getElementById('btn-nq-settings');
 const btnNySettings = document.getElementById('btn-ny-settings');
-const btnMySettings = document.getElementById('btn-my-settings');
+// const btnMySettings = document.getElementById('btn-my-settings');
 const resetDefaultsBtn = document.getElementById('reset-defaults-btn');
 
 
@@ -232,18 +232,10 @@ function updateSettingsModeButtonsUI() {
 // Update the UI function to handle the active colors
 function updateSettingsModeButtonsUITime() {
     const activeClass = "bg-white dark:bg-slate-800 shadow-lg text-indigo-600 dark:text-indigo-400 scale-[1.02]";
-    const inactiveClass = "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200";
     const tzDisplay = document.getElementById('current-tz-display');
 
-    if (currentSettingsModeTime === 'NY') {
-        btnNySettings.className = `flex-1 py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${activeClass}`;
-        btnMySettings.className = `flex-1 py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
-        if(tzDisplay) tzDisplay.textContent = "NY (UTC-4)";
-    } else {
-        btnMySettings.className = `flex-1 py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${activeClass}`;
-        btnNySettings.className = `flex-1 py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
-        if(tzDisplay) tzDisplay.textContent = "MY (UTC+8)";
-    }
+    if (btnNySettings) btnNySettings.className = `flex-1 py-4 px-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${activeClass}`;
+    if(tzDisplay) tzDisplay.textContent = "NY (UTC-4)";
 }
 
 function handleResetDefaults() {
@@ -356,52 +348,44 @@ btnNqSettings.addEventListener('click', () => {
 function convertTimeBetweenZones(timeStr, fromZone, toZone) {
     // timeStr = "HH:MM"
     let [hour, minute] = timeStr.split(":").map(Number);
-
-    // NY offset = -4 for your current code, MY offset = 8
-    const offsets = { NY: -4, MY: 8 };
-
-    let diff = offsets[toZone] - offsets[fromZone]; // e.g., NY->MY = -12 - (-13) = 1
-    hour += diff;
-
-    if (hour < 0) hour += 24;
-    if (hour >= 24) hour -= 24;
-
     return `${String(hour).padStart(2,"0")}:${String(minute).padStart(2,"0")}`;
 }
 
 // Listeners for the MY/NY switch within the settings panel
 
-btnNySettings.addEventListener('click', () => {
-    if (currentSettingsModeTime !== 'NY') {
-        currentSettingsModeTime = 'NY';
-        userSettings.timeZone = 'NY';
-        saveSettingsToLocalStorage();
+if (btnNySettings) {
+    btnNySettings.addEventListener('click', () => {
+        if (currentSettingsModeTime !== 'NY') {
+            currentSettingsModeTime = 'NY';
+            userSettings.timeZone = 'NY';
+            saveSettingsToLocalStorage();
 
-        if (activeTime) {
-            activeTime = convertTimeBetweenZones(activeTime, 'MY', 'NY');
+            if (activeTime) {
+                activeTime = convertTimeBetweenZones(activeTime, 'MY', 'NY');
+            }
+
+            updateSettingsModeButtonsUITime();
+            renderTimes();
+            renderEvents();
         }
+    });
+}
 
-        updateSettingsModeButtonsUITime();
-        renderTimes();
-        renderEvents();
-    }
-});
-
-btnMySettings.addEventListener('click', () => {
-    if (currentSettingsModeTime !== 'MY') {
-        currentSettingsModeTime = 'MY';
-        userSettings.timeZone = 'MY';
-        saveSettingsToLocalStorage();
-
-        if (activeTime) {
-            activeTime = convertTimeBetweenZones(activeTime, 'NY', 'MY');
-        }
-
-        updateSettingsModeButtonsUITime();
-        renderTimes();
-        renderEvents();
-    }
-});
+// btnMySettings.addEventListener('click', () => {
+//     if (currentSettingsModeTime !== 'MY') {
+//         currentSettingsModeTime = 'MY';
+//         userSettings.timeZone = 'MY';
+//         saveSettingsToLocalStorage();
+//
+//         if (activeTime) {
+//             activeTime = convertTimeBetweenZones(activeTime, 'NY', 'MY');
+//         }
+//
+//         updateSettingsModeButtonsUITime();
+//         renderTimes();
+//         renderEvents();
+//     }
+// });
 
 
 
@@ -427,10 +411,7 @@ function convertToLocalTime24(dateStr, timeStr) {
 
     const utcDate = new Date(Date.UTC(year, month - 1, day, hour, minute));
 
-    let offsetHours = 0;
-
-    if (currentSettingsModeTime === 'NY') offsetHours = -4; 
-    if (currentSettingsModeTime === 'MY') offsetHours = 8; 
+    let offsetHours = -4; 
 
     const adjustedTime = new Date(utcDate.getTime() + offsetHours * 60 * 60000);
 
@@ -499,25 +480,25 @@ function renderTimes() {
         // arrowRight.style.visibility = "hidden";
         
         // Disable NY/MY buttons
-        btnNySettings.disabled = true;
-        btnMySettings.disabled = true;
+        if (btnNySettings) btnNySettings.disabled = true;
+        // btnMySettings.disabled = true;
 
         // Optional: visually show disabled state
-        btnNySettings.classList.add('opacity-50');
-        btnMySettings.classList.add('opacity-50');
+        if (btnNySettings) btnNySettings.classList.add('opacity-50');
+        // btnMySettings.classList.add('opacity-50');
         
         return;
     }
 
     // --- ENABLE BUTTONS IF EVENTS EXIST ---
-    btnNySettings.disabled = false;
-    btnMySettings.disabled = false;
+    if (btnNySettings) btnNySettings.disabled = false;
+    // btnMySettings.disabled = false;
     arrowLeft.innerHTML = `‹
         `;
     arrowRight.innerHTML = `›
     `;
-    btnNySettings.classList.remove('opacity-50');
-    btnMySettings.classList.remove('opacity-50');
+    if (btnNySettings) btnNySettings.classList.remove('opacity-50');
+    // btnMySettings.classList.remove('opacity-50');
 
     // --- NORMAL TIMES RENDERING ---
     timesAll = [...new Set(filteredEvents.map(getLocalTimeOnly))].sort();
