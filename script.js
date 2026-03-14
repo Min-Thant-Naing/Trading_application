@@ -24,53 +24,69 @@ const defaultSettings = {
 
 
 
+function showLoading() {
+    const overlay = document.getElementById('loading-overlay');
+    if (overlay) {
+        overlay.classList.remove('hidden');
+        // Force reflow to ensure transition
+        void overlay.offsetWidth;
+        overlay.classList.remove('opacity-0');
+    }
+}
+
 async function runAutopilot(retries = 3, delayMs = 2000) {
     console.log("runAutopilot called");
-    const now = moment().tz("Asia/Kuala_Lumpur");
+    showLoading();
     
-    const news12h = document.getElementById('news-12h');
-    const newsMyTime = document.getElementById('news-my-time');
-    if (news12h) news12h.textContent = "Scanning...";
-    if (newsMyTime) newsMyTime.textContent = "Scanning...";
+    try {
+        const now = moment().tz("Asia/Kuala_Lumpur");
+        
+        const news12h = document.getElementById('news-12h');
+        const newsMyTime = document.getElementById('news-my-time');
+        if (news12h) news12h.textContent = "Scanning...";
+        if (newsMyTime) newsMyTime.textContent = "Scanning...";
 
-    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-    const fetchNews = async (prompt, element) => {
-        for (let i = 0; i < retries; i++) {
-            try {
-                const response = await ai.models.generateContent({
-                    model: "gemini-3-flash-preview",
-                    contents: prompt,
-                    config: {
-                        tools: [{ googleSearch: {} }]
+        const fetchNews = async (prompt, element) => {
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await ai.models.generateContent({
+                        model: "gemini-3-flash-preview",
+                        contents: prompt,
+                        config: {
+                            tools: [{ googleSearch: {} }]
+                        }
+                    });
+                    const text = response.text ? response.text.trim() : "";
+                    
+                    // If text is empty, indicates no news, or not 'today' mode, hide the section
+                    const section = element ? element.closest('section') : null;
+                    if (!text || text.toLowerCase().includes("no high-impact news") || currentModeNews !== 'today') {
+                        if (section) section.classList.add('hidden');
+                    } else {
+                        if (section) section.classList.remove('hidden');
+                        if (element) element.textContent = text;
                     }
-                });
-                const text = response.text ? response.text.trim() : "";
-                
-                // If text is empty, indicates no news, or not 'today' mode, hide the section
-                const section = element ? element.closest('section') : null;
-                if (!text || text.toLowerCase().includes("no high-impact news") || currentModeNews !== 'today') {
-                    if (section) section.classList.add('hidden');
-                } else {
-                    if (section) section.classList.remove('hidden');
-                    if (element) element.textContent = text;
+                    
+                    return text;
+                } catch (err) {
+                    console.error(`Attempt ${i + 1} failed:`, err);
+                    if (element) element.textContent = "Failed to fetch news.";
                 }
-                
-                return text;
-            } catch (err) {
-                console.error(`Attempt ${i + 1} failed:`, err);
-                if (element) element.textContent = "Failed to fetch news.";
             }
-        }
-    };
+        };
 
-    const prompt12h = "Analyze high-impact news from the last 12 hours affecting S&P 500 (US500) and Nasdaq (NQ). If no high-impact news exists, return nothing. Provide the output in this exact format:\n\nNews: [Short Name]\nImpact: High\nTrade Opportunity: [Yes - Short/Long / No]\n\nDo not include any other text.";
-    const promptMyTime = "Analyze high-impact news affecting S&P 500 (US500) and Nasdaq (NQ) specifically between 6:30 PM and 11:30 PM Malaysia Time (MYT) in the last 12 hours. If no high-impact news exists, return nothing. Provide the output in this exact format:\n\nNews: [Short Name]\nImpact: High\nTrade Opportunity: [Yes - Short/Long / No]\n\nDo not include any other text.";
+        const prompt12h = "Analyze high-impact news from the last 12 hours affecting S&P 500 (US500) and Nasdaq (NQ). If no high-impact news exists, return nothing. Provide the output in this exact format:\n\nNews: [Short Name]\nImpact: High\nTrade Opportunity: [Yes - Short/Long / No]\n\nDo not include any other text.";
+        const promptMyTime = "Analyze high-impact news affecting S&P 500 (US500) and Nasdaq (NQ) specifically between 6:30 PM and 11:30 PM Malaysia Time (MYT) in the last 12 hours. If no high-impact news exists, return nothing. Provide the output in this exact format:\n\nNews: [Short Name]\nImpact: High\nTrade Opportunity: [Yes - Short/Long / No]\n\nDo not include any other text.";
 
-    await Promise.all([
-        fetchNews(prompt12h, news12h),
-        fetchNews(promptMyTime, newsMyTime)
-    ]);
+        await Promise.all([
+            fetchNews(prompt12h, news12h),
+            fetchNews(promptMyTime, newsMyTime)
+        ]);
+    } finally {
+        hideLoading();
+    }
 }
 
 
