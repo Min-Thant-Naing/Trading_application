@@ -1,3 +1,7 @@
+
+import moment from "moment-timezone";
+import { GoogleGenAI } from "@google/genai";
+
 // Trading PrecisionCalc Logic
 let currentMode = 'SP1!'; // SP1! is ES1!
 let currentModeNews = 'today';
@@ -17,6 +21,64 @@ const defaultSettings = {
     esFixedValue: 101.01,
     nqFixedValue: 100.172,
 };
+
+
+
+async function runAutopilot(retries = 3, delayMs = 2000) {
+    console.log("runAutopilot called");
+    const now = moment().tz("Asia/Kuala_Lumpur");
+    
+    const news12h = document.getElementById('news-12h');
+    const newsMyTime = document.getElementById('news-my-time');
+    if (news12h) news12h.textContent = "Scanning...";
+    if (newsMyTime) newsMyTime.textContent = "Scanning...";
+
+    const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
+
+    const fetchNews = async (prompt, element) => {
+        for (let i = 0; i < retries; i++) {
+            try {
+                const response = await ai.models.generateContent({
+                    model: "gemini-3-flash-preview",
+                    contents: prompt,
+                    config: {
+                        tools: [{ googleSearch: {} }]
+                    }
+                });
+                const text = response.text ? response.text.trim() : "";
+                
+                // If text is empty, indicates no news, or not 'today' mode, hide the section
+                const section = element ? element.closest('section') : null;
+                if (!text || text.toLowerCase().includes("no high-impact news") || currentModeNews !== 'today') {
+                    if (section) section.classList.add('hidden');
+                } else {
+                    if (section) section.classList.remove('hidden');
+                    if (element) element.textContent = text;
+                }
+                
+                return text;
+            } catch (err) {
+                console.error(`Attempt ${i + 1} failed:`, err);
+                if (element) element.textContent = "Failed to fetch news.";
+            }
+        }
+    };
+
+    const prompt12h = "Analyze high-impact news from the last 12 hours affecting S&P 500 (US500) and Nasdaq (NQ). If no high-impact news exists, return nothing. Provide the output in this exact format:\n\nNews: [Short Name]\nImpact: High\nTrade Opportunity: [Yes - Short/Long / No]\n\nDo not include any other text.";
+    const promptMyTime = "Analyze high-impact news affecting S&P 500 (US500) and Nasdaq (NQ) specifically between 6:30 PM and 11:30 PM Malaysia Time (MYT) in the last 12 hours. If no high-impact news exists, return nothing. Provide the output in this exact format:\n\nNews: [Short Name]\nImpact: High\nTrade Opportunity: [Yes - Short/Long / No]\n\nDo not include any other text.";
+
+    await Promise.all([
+        fetchNews(prompt12h, news12h),
+        fetchNews(promptMyTime, newsMyTime)
+    ]);
+}
+
+
+// Run once immediately for testing
+// runAutopilot();
+
+
+
 
 let userSettings = { ...defaultSettings };
 
@@ -119,18 +181,30 @@ function updateModeNewsUI() {
     const activeClass = "bg-white dark:bg-slate-800 shadow-lg text-indigo-600 dark:text-indigo-400 scale-[1.02]";
     const inactiveClass = "text-slate-400 hover:text-slate-600 dark:hover:text-slate-200";
 
+    const news12hSection = document.getElementById('news-section-12h');
+    const newsMyTimeSection = document.getElementById('news-section-my-time');
+
     if (currentModeNews === 'today') {
         btnTD.className = `flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${activeClass}`;
         btnYS.className = `flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
         btnTM.className = `flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
+        
+        if (news12hSection) news12hSection.classList.remove('hidden');
+        if (newsMyTimeSection) newsMyTimeSection.classList.remove('hidden');
     } else if (currentModeNews === 'yesterday') {
         btnYS.className = `flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${activeClass}`;
         btnTD.className = `flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
         btnTM.className = `flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
+        
+        if (news12hSection) news12hSection.classList.add('hidden');
+        if (newsMyTimeSection) newsMyTimeSection.classList.add('hidden');
     } else {
         btnTM.className = `flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${activeClass}`;
         btnTD.className = `flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
         btnYS.className = `flex-1 py-3 px-3 rounded-xl text-xs font-black uppercase tracking-widest transition-all duration-200 ${inactiveClass}`;
+        
+        if (news12hSection) news12hSection.classList.add('hidden');
+        if (newsMyTimeSection) newsMyTimeSection.classList.add('hidden');
     }
 }
 
@@ -672,8 +746,12 @@ async function launchApp() {
         await Promise.all([
             loadNoteLocal(),
             loadEvents(),
-            initCalendar()
+            initCalendar(),
+            runAutopilot()
         ]);
+
+        // Auto-refresh news every 24 hours
+        setInterval(runAutopilot, 24 * 60 * 60 * 1000);
     } catch (err) {
         console.error("Error during app launch:", err);
     } finally {

@@ -118,7 +118,19 @@
               </section>         
             </div>
 
-            <div id="section-news" class="hidden"> 
+            <div id="section-notes" class="hidden w-full">
+                <section
+                    class="bg-slate-100 dark:bg-slate-950 rounded-3xl w-full p-5 border-4 border-slate-200 dark:border-white/5 overflow-visible">
+                    
+                    <textarea
+                        id="todo-input"
+                        placeholder="Write your notes here..."
+                        class="w-full p-4 resize-none outline-none bg-transparent font-semibold text-black dark:text-white block"
+                    ></textarea>
+                </section>
+            </div>
+
+            <div id="section-news" class="hidden space-y-6"> 
               <section class="bg-white dark:bg-slate-900/50 rounded-3xl w-full p-5 shadow-xl border border-slate-200 dark:border-white/5 backdrop-blur-sm">
                   <div class="space-y-7">
                       <!-- Tabs -->
@@ -154,18 +166,19 @@
                       </div>
                   </div>
               </section>  
-            </div>
 
-            <div id="section-notes" class="hidden w-full">
-                <section
-                    class="bg-slate-100 dark:bg-slate-950 rounded-3xl w-full p-5 border-4 border-slate-200 dark:border-white/5 overflow-visible">
-                    
-                    <textarea
-                        id="todo-input"
-                        placeholder="Write your notes here..."
-                        class="w-full p-4 resize-none outline-none bg-transparent font-semibold text-black dark:text-white block"
-                    ></textarea>
-                </section>
+              <section id="news-section-12h" class="bg-white dark:bg-slate-900/50 rounded-3xl w-full p-5 shadow-xl border border-slate-200 dark:border-white/5 backdrop-blur-sm">
+                  <h2 class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tight mb-3">Last 12 Hours High Impact</h2>
+                  <div id="news-12h" class="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
+                      Scanning for news...
+                  </div>
+              </section>
+              <section id="news-section-my-time" class="bg-white dark:bg-slate-900/50 rounded-3xl w-full p-5 shadow-xl border border-slate-200 dark:border-white/5 backdrop-blur-sm">
+                  <h2 class="text-[10px] font-black text-slate-500 dark:text-slate-400 uppercase tracking-tight mb-3">MYT 6:30PM - 11:30PM High Impact</h2>
+                  <div id="news-my-time" class="text-xs text-slate-700 dark:text-slate-300 font-medium leading-relaxed whitespace-pre-wrap">
+                      Scanning for news...
+                  </div>
+              </section>
             </div>
 
 
