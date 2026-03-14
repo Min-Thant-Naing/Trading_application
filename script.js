@@ -746,9 +746,11 @@ async function launchApp() {
         await Promise.all([
             loadNoteLocal(),
             loadEvents(),
-            initCalendar(),
-            runAutopilot()
+            initCalendar()
         ]);
+
+        // Run autopilot and wait for it to finish
+        await runAutopilot();
 
         // Auto-refresh news every 24 hours
         setInterval(runAutopilot, 24 * 60 * 60 * 1000);
