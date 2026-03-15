@@ -48,42 +48,100 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
 
         const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
-        const fetchNews = async (prompt, element) => {
+        const nyDay = new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).getDay();
+        const isWeekend = (nyDay === 0 || nyDay === 6);
+
+        const fetchCombinedNews = async (el12h, elMyTime) => {
+            const timeoutMs = 90000; // 90 seconds timeout
+            
+            let combinedPrompt = "Analyze the top 5 to 8 high-impact macroeconomic and market-moving news events affecting S&P 500 (US500) and Nasdaq (NQ). Group similar stories together to ensure there are NO duplicate events. Rank the list with the absolute highest-impact, distinct events at the top.\nReturn a single JSON object with the following keys:\n- 'news12h': an array of events from the last 12 hours.";
+
+            if (!isWeekend) {
+                combinedPrompt += "\n- 'newsMyTime': an array of events specifically during the most recent US morning trading session (6:30 AM to 11:30 AM NY Time).";
+            }
+
+            combinedPrompt += "\nEach event object must have keys 'news' (extremely concise headline, MAXIMUM 5 to 7 words, no explanations or subtitles), 'impact' ('High'), and 'date' (formatted like '10th'). If no news exists for a category, return an empty array []. Do not include markdown formatting like ```json or any other text.";
+
             for (let i = 0; i < retries; i++) {
                 try {
-                    const response = await ai.models.generateContent({
+                    const timeoutPromise = new Promise((_, reject) => {
+                        setTimeout(() => reject(new Error('Request timed out')), timeoutMs);
+                    });
+
+                    const apiPromise = ai.models.generateContent({
                         model: "gemini-3-flash-preview",
-                        contents: prompt,
+                        contents: combinedPrompt,
                         config: {
+                            temperature: 0.1,
                             tools: [{ googleSearch: {} }]
                         }
                     });
-                    const text = response.text ? response.text.trim() : "";
+
+                    const response = await Promise.race([apiPromise, timeoutPromise]);
+                    let text = response.text ? response.text.trim() : "";
+                    text = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+
+                    if (!text || text.toUpperCase() === "NONE" || currentModeNews !== 'today') {
+                        if (el12h) el12h.closest('section').classList.add('hidden');
+                        if (elMyTime) elMyTime.closest('section').classList.add('hidden');
+                        return;
+                    }
+
+                    let data;
+                    try {
+                        data = JSON.parse(text);
+                    } catch (e) {
+                        console.error("Failed to parse JSON:", e, text);
+                        throw new Error("JSON Parse Error");
+                    }
+
+                    const renderArray = (arr, el) => {
+                        const section = el ? el.closest('section') : null;
+                        if (Array.isArray(arr) && arr.length > 0) {
+                            const highImpactArr = arr.filter(item => item.impact && item.impact.toUpperCase() === 'HIGH');
+                            if (highImpactArr.length > 0) {
+                                if (section) section.classList.remove('hidden');
+                                let html = '<div class="flex flex-col gap-3">';
+                                highImpactArr.forEach((item) => {
+                                    let impactColor = 'text-red-500';
+
+                                    html += '<div class="flex items-center gap-4 p-4 bg-slate-100 dark:bg-slate-800/40 rounded-2xl">';
+                                    html += '<span class="flex-1 text-slate-700 dark:text-slate-300 font-semibold text-sm">' + item.news + '</span>';
+                                    html += '<span class="flex-none text-[10px] font-black uppercase tracking-widest ' + impactColor + '">' + item.impact + '</span>';
+                                    html += '</div>';
+                                });
+                                html += '</div>';
+                                if (el) el.innerHTML = html;
+                            } else {
+                                if (section) section.classList.add('hidden');
+                            }
+                        } else {
+                            if (section) section.classList.add('hidden');
+                        }
+                    };
+
+                    renderArray(data.news12h, el12h);
                     
-                    // If text is empty, indicates no news, or not 'today' mode, hide the section
-                    const section = element ? element.closest('section') : null;
-                    if (!text || text.toLowerCase().includes("no high-impact news") || currentModeNews !== 'today') {
-                        if (section) section.classList.add('hidden');
+                    if (isWeekend) {
+                        if (elMyTime) elMyTime.closest('section').classList.add('hidden');
                     } else {
-                        if (section) section.classList.remove('hidden');
-                        if (element) element.textContent = text;
+                        renderArray(data.newsMyTime, elMyTime);
                     }
                     
-                    return text;
+                    return; // Success!
                 } catch (err) {
-                    console.error(`Attempt ${i + 1} failed:`, err);
-                    if (element) element.textContent = "Failed to fetch news.";
+                    if (i === retries - 1) {
+                        console.error("All attempts failed. Last error:", err);
+                        if (el12h) el12h.closest('section').classList.add('hidden');
+                        if (elMyTime) elMyTime.closest('section').classList.add('hidden');
+                    } else {
+                        console.warn("Attempt " + (i + 1) + " failed (" + err.message + "). Retrying...");
+                    }
                 }
             }
         };
 
-        const prompt12h = "Analyze high-impact news from the last 12 hours affecting S&P 500 (US500) and Nasdaq (NQ). If no high-impact news exists, return nothing. Provide the output in this exact format:\n\nNews: [Short Name]\nImpact: High\nTrade Opportunity: [Yes - Short/Long / No]\n\nDo not include any other text.";
-        const promptMyTime = "Analyze high-impact news affecting S&P 500 (US500) and Nasdaq (NQ) specifically between 6:30 PM and 11:30 PM Malaysia Time (MYT) in the last 12 hours. If no high-impact news exists, return nothing. Provide the output in this exact format:\n\nNews: [Short Name]\nImpact: High\nTrade Opportunity: [Yes - Short/Long / No]\n\nDo not include any other text.";
-
-        await Promise.all([
-            fetchNews(prompt12h, news12h),
-            fetchNews(promptMyTime, newsMyTime)
-        ]);
+        await fetchCombinedNews(news12h, newsMyTime);
     } finally {
         hideLoading();
     }
