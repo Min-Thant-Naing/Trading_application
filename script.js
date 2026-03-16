@@ -43,16 +43,22 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
         
         const news12h = document.getElementById('news-12h');
         const newsMyTime = document.getElementById('news-my-time');
+
+        // Initialize AI first to catch key errors early
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+            throw new Error("API Key missing");
+        }
+        const ai = new GoogleGenAI({ apiKey });
+
         if (news12h) news12h.textContent = "Scanning...";
         if (newsMyTime) newsMyTime.textContent = "Scanning...";
-
-        const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
         const nyDay = new Date(new Date().toLocaleString("en-US", {timeZone: "America/New_York"})).getDay();
         const isWeekend = (nyDay === 0 || nyDay === 6);
 
         const fetchCombinedNews = async (el12h, elMyTime) => {
-            const timeoutMs = 90000; // 90 seconds timeout
+            const timeoutMs = 45000; // 45 seconds timeout for better mobile response
             
             let combinedPrompt = "Analyze the top 5 to 8 high-impact macroeconomic and market-moving news events affecting S&P 500 (US500) and Nasdaq (NQ). Group similar stories together to ensure there are NO duplicate events. Rank the list with the absolute highest-impact, distinct events at the top.\nReturn a single JSON object with the following keys:\n- 'news12h': an array of events from the last 12 hours.";
 
@@ -132,8 +138,9 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
                 } catch (err) {
                     if (i === retries - 1) {
                         console.error("All attempts failed. Last error:", err);
-                        if (el12h) el12h.closest('section').classList.add('hidden');
-                        if (elMyTime) elMyTime.closest('section').classList.add('hidden');
+                        if (el12h) el12h.textContent = "News temporarily unavailable.";
+                        if (elMyTime) elMyTime.textContent = "News temporarily unavailable.";
+                        // Hide after showing error for a bit if preferred, but better to show status
                     } else {
                         console.warn("Attempt " + (i + 1) + " failed (" + err.message + "). Retrying...");
                     }
@@ -142,8 +149,14 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
         };
 
         await fetchCombinedNews(news12h, newsMyTime);
+    } catch (err) {
+        console.error("Autopilot error:", err);
+        const news12h = document.getElementById('news-12h');
+        const newsMyTime = document.getElementById('news-my-time');
+        if (news12h) news12h.textContent = "Unable to connect to news service.";
+        if (newsMyTime) newsMyTime.textContent = "Unable to connect to news service.";
     } finally {
-        hideLoading();
+        // We don't call hideLoading here anymore to let launchApp manage the final state
     }
 }
 
