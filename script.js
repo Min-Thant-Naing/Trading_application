@@ -1,6 +1,5 @@
 
 import moment from "moment-timezone";
-import { GoogleGenAI } from "@google/genai";
 
 // Trading PrecisionCalc Logic
 let currentMode = 'SP1!'; // SP1! is ES1!
@@ -45,11 +44,11 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
         const newsMyTime = document.getElementById('news-my-time');
 
         // Initialize AI first to catch key errors early
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            throw new Error("API Key missing");
-        }
-        const ai = new GoogleGenAI({ apiKey });
+        // const apiKey = process.env.GEMINI_API_KEY;
+        // if (!apiKey) {
+        //     throw new Error("API Key missing");
+        // }
+        // const ai = new GoogleGenAI({ apiKey });
 
         if (news12h) news12h.textContent = "Scanning...";
         if (newsMyTime) newsMyTime.textContent = "Scanning...";
@@ -58,7 +57,7 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
         const isWeekend = (nyDay === 0 || nyDay === 6);
 
         const fetchCombinedNews = async (el12h, elMyTime) => {
-            const timeoutMs = 45000; // 45 seconds timeout for better mobile response
+            const timeoutMs = 60000; // 60 seconds timeout
             
             let combinedPrompt = "Analyze the top 5 to 8 high-impact macroeconomic and market-moving news events affecting S&P 500 (US500) and Nasdaq (NQ). Group similar stories together to ensure there are NO duplicate events. Rank the list with the absolute highest-impact, distinct events at the top.\nReturn a single JSON object with the following keys:\n- 'news12h': an array of events from the last 12 hours.";
 
@@ -74,14 +73,11 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
                         setTimeout(() => reject(new Error('Request timed out')), timeoutMs);
                     });
 
-                    const apiPromise = ai.models.generateContent({
-                        model: "gemini-3-flash-preview",
-                        contents: combinedPrompt,
-                        config: {
-                            temperature: 0.1,
-                            tools: [{ googleSearch: {} }]
-                        }
-                    });
+                    const apiPromise = fetch('/api/news', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ prompt: combinedPrompt })
+                    }).then(res => res.json());
 
                     const response = await Promise.race([apiPromise, timeoutPromise]);
                     let text = response.text ? response.text.trim() : "";
