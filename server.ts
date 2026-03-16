@@ -6,6 +6,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import { createClient } from "@supabase/supabase-js";
 import dotenv from "dotenv";
+import { GoogleGenAI } from "@google/genai";
 
 dotenv.config();
 
@@ -101,6 +102,48 @@ app.get("/trades", async (req, res) => {
         return res.json(ordersHistory);
     } catch (err: any) {
         return res.json(tradesCache);
+    }
+});
+
+app.get("/api/news", async (req, res) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+        return res.status(500).json({ error: "Gemini API key not configured on server" });
+    }
+
+    try {
+        const ai = new GoogleGenAI({ apiKey });
+        const { isWeekend } = req.query;
+        
+        let combinedPrompt = "Analyze the top 5 to 8 high-impact macroeconomic and market-moving news events affecting S&P 500 (US500) and Nasdaq (NQ). Group similar stories together to ensure there are NO duplicate events. Rank the list with the absolute highest-impact, distinct events at the top.\nReturn a single JSON object with the following keys:\n- 'news12h': an array of events from the last 12 hours.";
+
+        if (isWeekend !== 'true') {
+            combinedPrompt += "\n- 'newsMyTime': an array of events specifically during the most recent US morning trading session (6:30 AM to 11:30 AM NY Time).";
+        }
+
+        combinedPrompt += "\nEach event object must have keys 'news' (extremely concise headline, MAXIMUM 5 to 7 words, no explanations or subtitles), 'impact' ('High'), and 'date' (formatted like '10th'). If no news exists for a category, return an empty array []. Do not include markdown formatting like ```json or any other text.";
+
+        const response = await ai.models.generateContent({
+            model: "gemini-3-flash-preview",
+            contents: combinedPrompt,
+            config: {
+                temperature: 0.1,
+                tools: [{ googleSearch: {} }]
+            }
+        });
+
+        let text = response.text ? response.text.trim() : "";
+        text = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
+
+        if (!text || text.toUpperCase() === "NONE") {
+            return res.json({ news12h: [], newsMyTime: [] });
+        }
+
+        const data = JSON.parse(text);
+        res.json(data);
+    } catch (err: any) {
+        console.error("Server News Error:", err);
+        res.status(500).json({ error: err.message || "Failed to fetch news" });
     }
 });
 

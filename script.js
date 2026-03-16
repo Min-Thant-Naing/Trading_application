@@ -1,6 +1,5 @@
 
 import moment from "moment-timezone";
-import { GoogleGenAI } from "@google/genai";
 
 // Trading PrecisionCalc Logic
 let currentMode = 'SP1!'; // SP1! is ES1!
@@ -39,17 +38,8 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
     showLoading();
     
     try {
-        const now = moment().tz("Asia/Kuala_Lumpur");
-        
         const news12h = document.getElementById('news-12h');
         const newsMyTime = document.getElementById('news-my-time');
-
-        // Initialize AI first to catch key errors early
-        const apiKey = process.env.GEMINI_API_KEY;
-        if (!apiKey) {
-            throw new Error("API Key missing");
-        }
-        const ai = new GoogleGenAI({ apiKey });
 
         if (news12h) news12h.textContent = "Scanning...";
         if (newsMyTime) newsMyTime.textContent = "Scanning...";
@@ -58,48 +48,15 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
         const isWeekend = (nyDay === 0 || nyDay === 6);
 
         const fetchCombinedNews = async (el12h, elMyTime) => {
-            const timeoutMs = 45000; // 45 seconds timeout for better mobile response
-            
-            let combinedPrompt = "Analyze the top 5 to 8 high-impact macroeconomic and market-moving news events affecting S&P 500 (US500) and Nasdaq (NQ). Group similar stories together to ensure there are NO duplicate events. Rank the list with the absolute highest-impact, distinct events at the top.\nReturn a single JSON object with the following keys:\n- 'news12h': an array of events from the last 12 hours.";
-
-            if (!isWeekend) {
-                combinedPrompt += "\n- 'newsMyTime': an array of events specifically during the most recent US morning trading session (6:30 AM to 11:30 AM NY Time).";
-            }
-
-            combinedPrompt += "\nEach event object must have keys 'news' (extremely concise headline, MAXIMUM 5 to 7 words, no explanations or subtitles), 'impact' ('High'), and 'date' (formatted like '10th'). If no news exists for a category, return an empty array []. Do not include markdown formatting like ```json or any other text.";
-
             for (let i = 0; i < retries; i++) {
                 try {
-                    const timeoutPromise = new Promise((_, reject) => {
-                        setTimeout(() => reject(new Error('Request timed out')), timeoutMs);
-                    });
-
-                    const apiPromise = ai.models.generateContent({
-                        model: "gemini-3-flash-preview",
-                        contents: combinedPrompt,
-                        config: {
-                            temperature: 0.1,
-                            tools: [{ googleSearch: {} }]
-                        }
-                    });
-
-                    const response = await Promise.race([apiPromise, timeoutPromise]);
-                    let text = response.text ? response.text.trim() : "";
-                    text = text.replace(/^```json\s*/i, '').replace(/^```\s*/, '').replace(/\s*```$/, '').trim();
-
-                    if (!text || text.toUpperCase() === "NONE" || currentModeNews !== 'today') {
-                        if (el12h) el12h.closest('section').classList.add('hidden');
-                        if (elMyTime) elMyTime.closest('section').classList.add('hidden');
-                        return;
+                    const response = await fetch(`/api/news?isWeekend=${isWeekend}`);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || "Failed to fetch news from server");
                     }
-
-                    let data;
-                    try {
-                        data = JSON.parse(text);
-                    } catch (e) {
-                        console.error("Failed to parse JSON:", e, text);
-                        throw new Error("JSON Parse Error");
-                    }
+                    
+                    const data = await response.json();
 
                     const renderArray = (arr, el) => {
                         const section = el ? el.closest('section') : null;
@@ -140,9 +97,9 @@ async function runAutopilot(retries = 3, delayMs = 2000) {
                         console.error("All attempts failed. Last error:", err);
                         if (el12h) el12h.textContent = "News temporarily unavailable.";
                         if (elMyTime) elMyTime.textContent = "News temporarily unavailable.";
-                        // Hide after showing error for a bit if preferred, but better to show status
                     } else {
                         console.warn("Attempt " + (i + 1) + " failed (" + err.message + "). Retrying...");
+                        await new Promise(r => setTimeout(r, delayMs));
                     }
                 }
             }
