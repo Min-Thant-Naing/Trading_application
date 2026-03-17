@@ -106,32 +106,7 @@ app.get("/trades", async (req, res) => {
 
 let newsCache: any[] = [];
 
-app.get("/api/news", async (req, res) => {
-  try {
-    // Fetch MYR and Malaysia news from the last 12 hours using Google News RSS
-    const rssUrl = "https://news.google.com/rss/search?q=MYR+OR+Ringgit+OR+Malaysia+when:12h&hl=en-US&gl=US&ceid=US:en";
-    const response = await axios.get(rssUrl, { headers: { "User-Agent": "Mozilla/5.0" } });
-    const parsed = await xml2js.parseStringPromise(response.data, { explicitArray: false });
-    
-    let items = parsed.rss?.channel?.item || [];
-    if (!Array.isArray(items)) {
-      items = items ? [items] : [];
-    }
-    
-    const formattedNews = items.map((item: any) => ({
-      title: item.title,
-      link: item.link,
-      pubDate: item.pubDate,
-      source: item.source?._ || item.source || "Unknown Source",
-    }));
-    
-    newsCache = formattedNews;
-    return res.json(formattedNews);
-  } catch (err) {
-    console.error("Error fetching news:", err);
-    return res.json(newsCache);
-  }
-});
+
 
 // ... (rest of the file)
 
